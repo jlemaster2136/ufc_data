@@ -3,16 +3,12 @@ import numpy as np
 from datetime import datetime, date
 import category_encoders as ce
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.model_selection import train_test_split, cross_val_score, RandomizedSearchCV
 from sklearn.impute import SimpleImputer
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import classification_report
 
 
 # %%
