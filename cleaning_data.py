@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
-# import category_encoders as ce
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+import category_encoders as ce
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import train_test_split
@@ -11,7 +11,6 @@ from sklearn.impute import SimpleImputer
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import RandomizedSearchCV
-import math
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import classification_report
 
@@ -278,13 +277,3 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
 
     data = data.drop(columns=[])
     return data, current
-
-
-new_stats = fight_stats('/Users/joelempster/Downloads/ufc_fight_stats (7).csv',
-                        '/Users/joelempster/Downloads/ufc_event_details (8).csv',
-                        '/Users/joelempster/Downloads/ufc_fight_results (7).csv',
-                        '/Users/joelempster/Downloads/ufc_fighter_tott (7).csv')
-total_stats = new_stats[0]
-total_stats.loc[total_stats['FIGHTER'] == 'Conor McGregor']
-# %%
-conor_vs_chandler = compare_fighters('Conor McGregor', 'Michael Chandler')
