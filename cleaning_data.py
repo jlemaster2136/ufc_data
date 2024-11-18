@@ -12,63 +12,46 @@ from sklearn.dummy import DummyClassifier
 
 
 # %%
-# Calculates current age of fight at present.
+# current age of fighter
 def calculate_age(born):
     today = datetime.now()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-
+# age of fighter at fight date
 def age_at_fight(born, date):
     return (date - born).astype('<m8[Y]')
 
-
-def remove_other_side(col):
-    return col[:-11] if col.endswith('_other_side') else col
-
-
+# split bout (form 'FIGHTER vs. FIGHTER2) into two columns
 def find_other_fighter(row):
-    # Split the matchup into two competitors
     fighter = row['BOUT'].split(' vs. ')
-    # Return the competitor that is not equal to the given competitor
     return fighter[1] if row['FIGHTER'] == fighter[0] else fighter[0]
 
 
-# Function to determine the outcome for each competitor
+# assign outcome to each fighter 
 def find_outcomes(row):
     competitors = row['BOUT'].split(' vs. ')
     outcome = row['OUTCOME']
-
-    # Determine outcomes based on the matchup and outcome
     if outcome == 'W/L':
         competitor_outcome = 'W' if row['FIGHTER'] == competitors[0] else 'L'
         competitor_two_outcome = 'L' if row['FIGHTER'] == competitors[0] else 'W'
-    else:  # outcome == 'L/W'
+    else:
         competitor_outcome = 'L' if row['FIGHTER'] == competitors[0] else 'W'
         competitor_two_outcome = 'W' if row['FIGHTER'] == competitors[0] else 'L'
-
     return pd.Series([competitor_outcome, competitor_two_outcome])
 
-    # Apply the function to create the new columns
-
-
+# get current stats of fighters for up to date comparisons
 def current_stats(dataframe):
-    # Drop specified columns
     dataframe = dataframe.drop(
         columns=['EVENT', 'BOUT', 'OUTCOME', 'WEIGHT_opponent', 'REACH_opponent', 'STANCE_opponent',
                  'METHOD', 'ROUND', 'TIME FORMAT', 'FIGHTER2', 'fighter_outcome',
                  'fighter_outcome_2', 'LOCATION'])
-    # Drop rows where 'DATE' is NaN
     dataframe = dataframe.dropna(subset=['DATE'])
-
-    # Group by 'FIGHTER' and find the index of the most recent 'DATE'
     idx = dataframe.groupby('FIGHTER')['DATE'].idxmax()
     idx = idx.dropna()  # Drop any NaN values from the index
-
-    # Select the rows with the most recent stats for each fighter
     fighter_current = dataframe.loc[idx]
     return fighter_current
 
-
+# compare the stats between two fighters, returns dataframe
 def compare_fighters(fighter1, fighter2):
     fighter_a = new_stats[1].loc[new_stats[1]['FIGHTER'] == fighter1]
     fighter_b = new_stats[1].loc[new_stats[1]['FIGHTER'] == fighter2]
@@ -77,6 +60,7 @@ def compare_fighters(fighter1, fighter2):
 
 
 # %%
+#Function to manipulate dataframes
 def fight_stats(stat_path, event_path, outcome_path, fighter_path):
     data = pd.read_csv(stat_path)
     print(f'{len(data) - len(data.dropna())} columns were dropped')
@@ -138,7 +122,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
     data = pd.merge(data, o_data, left_on=['EVENT', 'BOUT', 'FIGHTER', 'FIGHTER2'],
                     right_on=['EVENT', 'BOUT', 'FIGHTER', 'FIGHTER2'], suffixes=('_fighter', '_by_opponent'))
 
-    # wrangle events data:
+    # clean events data:
     events = pd.read_csv(event_path)
     events['DATE'] = pd.to_datetime(events['DATE'], format='%B %d, %Y')
     events[['CITY', 'STATE', 'COUNTRY']] = events['LOCATION'].str.split(',', expand=True)
@@ -147,7 +131,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
     events = events[(events['DATE'] >= '2000-01-01')]
     data = pd.merge(data, events, on=['EVENT'], how='left')
 
-    # Calculate the cumulative sum of stats for each person
+    # calculate the cumulative and rolling sum of stats for each person
     # (we don't want round to be summed, it is informative the way it is)
     data['ROUND'] = data['ROUND'].astype('str')
     map_wl = {'W': 1,
@@ -176,7 +160,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
         level=0, drop=True)
     data[accumulated_columns] = data.groupby('FIGHTER')[columns_to_accumulate].cumsum()
 
-    # wrangling individual fighter data
+    # manipulate individual fighter data
     fighters = pd.read_csv(fighter_path)
     fighters['STANCE'] = fighters['STANCE'].fillna('Orthodox')
     fighters['STANCE'] = fighters['STANCE'].replace('--', 'Orthodox')
@@ -194,7 +178,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
     data = pd.merge(data, opponents, on='FIGHTER2', how='left', suffixes=('_fighter', '_opponent'))
     data['age_fighter'] = ((((data['DATE'] - data['DOB_fighter']).astype('<m8[s]')).astype(int)) / 31556952).astype(int)
 
-    # to gather stats for proportions
+    # get stats for proportions
     landed = []
     attempted = []
     for thing in to_split_rename:
@@ -229,7 +213,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
                         data[f'{thing}_last_proportion'] = data[landed[i]] / data[attempted[i]]
             else:
                 continue
-
+    
     stats1 = []
     for thing in list(data.columns):
         if data[thing].dtype == 'object':
@@ -245,6 +229,7 @@ def fight_stats(stat_path, event_path, outcome_path, fighter_path):
                 stats1.append(thing)
             else:
                 continue
+    
     # stats that will get additional rate, eg strike/min
 
     for thing in stats1:
