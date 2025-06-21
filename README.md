@@ -1,6 +1,6 @@
 # UFC Stats Cleaner and Predictor
 
-This project is designed to clean and visualize UFC data and predict future fights. 
+This project is designed to clean and visualize UFC data.
 
 ## Features
 
